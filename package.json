@@ -1,0 +1,55 @@
+{
+  "name": "coin-format",
+  "version": "0.0.0",
+  "description": "A tiny zero-dependency library to format coins, primarily for crypto, with broader applications as well.",
+  "main": "index.js",
+  "module": "index.mjs",
+  "types": "index.d.ts",
+  "author": "Alex Saft <fend25@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fend25/coin-format/issues"
+  },
+  "homepage": "https://github.com/fend25/coin-format#readme",
+  "private": false,
+  "keywords": [
+    "cryptocurrency",
+    "currency-format",
+    "coin",
+    "ethereum",
+    "bitcoin",
+    "crypto-formatting",
+    "wei",
+    "satoshis",
+    "blockchain",
+    "decimal-conversion",
+    "precision-formatting",
+    "currency-utils",
+    "crypto-utils"
+  ],
+  "scripts": {
+    "clean": "rimraf dist && mkdirp dist",
+    "build": "npm run clean && tsup --config configs/tsup.config.ts && npm run copy_files",
+    "copy_files": "cpy ./package.json ./README.md ./dist",
+    "patch": "npm run release -- -i patch --ci",
+    "minor": "npm run release -- -i minor --ci",
+    "release": "dotenv -e ./configs/.release.env -- release-it --config ./configs/.release-it.js --github.release",
+    "testrun": "vitest run",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "cpy-cli": "^5.0.0",
+    "dotenv": "^16.4.4",
+    "dotenv-cli": "^7.3.0",
+    "mkdirp": "^3.0.1",
+    "release-it": "^17.0.5",
+    "rimraf": "^5.0.5",
+    "tsup": "^8.0.2",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
