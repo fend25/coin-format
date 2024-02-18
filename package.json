@@ -1,6 +1,6 @@
 {
   "name": "coin-format",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A tiny zero-dependency library to format coins, primarily for crypto, with broader applications as well.",
   "main": "index.js",
   "module": "index.mjs",
