@@ -6,7 +6,7 @@ const validateDecimals = (decimals: any): decimals is number => {
   return true
 }
 
-export const coinsToWeiInBigInt = (value: string | number, decimals: number = DEFAULT_DECIMALS): bigint => {
+export const coinToWeiInBigInt = (value: string | number, decimals: number = DEFAULT_DECIMALS): bigint => {
   value = value.toString()
 
   //test that value is string of positive number
@@ -30,11 +30,11 @@ export const coinsToWeiInBigInt = (value: string | number, decimals: number = DE
   return weiValue
 }
 
-export const coinsToWei = (value: string | number, decimals: number = DEFAULT_DECIMALS): string => {
-  return coinsToWeiInBigInt(value, decimals).toString()
+export const coinToWei = (value: string | number, decimals: number = DEFAULT_DECIMALS): string => {
+  return coinToWeiInBigInt(value, decimals).toString()
 }
 
-export const weiToCoins = (weiValue: string | bigint, decimals: number = DEFAULT_DECIMALS): string => {
+export const weiToCoin = (weiValue: string | bigint, decimals: number = DEFAULT_DECIMALS): string => {
   validateDecimals(decimals)
 
   const weiBigInt = BigInt(weiValue)
@@ -68,10 +68,10 @@ export const weiToCoins = (weiValue: string | bigint, decimals: number = DEFAULT
   return formattedEthAmount
 }
 
-export const dangerouslyWeiToCoinsInFloat = (weiValue: string | bigint, decimals: number = DEFAULT_DECIMALS): number =>
-  parseFloat(weiToCoins(weiValue, decimals))
+export const dangerouslyWeiToCoinInFloat = (weiValue: string | bigint, decimals: number = DEFAULT_DECIMALS): number =>
+  parseFloat(weiToCoin(weiValue, decimals))
 
-export const format = (value: string | number, formattingThreshold: number = 100_000): string => {
+export const formatNice = (value: string | number, formattingThreshold: number = 100_000): string => {
   const numStr = typeof value === 'string' ? value : value.toString()
   const roughNum = parseFloat(numStr)
   if (isNaN(roughNum)) throw new Error(`Coin.format: Invalid number: ${numStr}`)
@@ -106,16 +106,19 @@ export const format = (value: string | number, formattingThreshold: number = 100
   }
 
   const suffixes = ["", "K", "M", "B", "T"]
-  const i = integerNum === 0 ? 0 : Math.floor(Math.log(integerNum) / 6.907755278982137) // 6.907... is Math.log(1000)
-  const withPossibleTrailingZeroes = (integerNum / Math.pow(1000, i)).toFixed(3)
+  const i = integerNum === 0
+    ? 0
+    // 6.907... is Math.log(1000), 4 is max index of suffixes
+    : Math.min(Math.floor(Math.log(integerNum) / 6.907755278982137), 4)
 
-  // remove trailing zeroes
-  const formatted = withPossibleTrailingZeroes.replace(/\.?0+$/, '')
+  const [integerPartOfNice, fractionalPartOfNice = ''] = (integerNum / Math.pow(1000, i)).toString().split('.')
+  const formatted = integerPartOfNice +
+    (fractionalPartOfNice.length > 0 ? '.' + fractionalPartOfNice.slice(0, 3) : '')
 
   return `${formatted}${suffixes[i]}`
 }
 
-export const formatPrecise = (value: string | number, precision: number = 3): string => {
+export const formatFixed = (value: string | number, precision: number = 3): string => {
   const numStr = value.toString()
   if (precision === -1) return numStr
 
@@ -125,17 +128,50 @@ export const formatPrecise = (value: string | number, precision: number = 3): st
   return `${integerPart}.${fractionalPart.substring(0, precision).padEnd(precision, '0')}`
 }
 
-export const formatWithCurrency = (value: string | number, currency: string = '', formattingThreshold: number = 100_000): string => {
-  return format(value, formattingThreshold) + (currency ? ` ${currency}` : '')
-
+export const weiFormatNice = (weiValue: string | bigint, decimals: number = DEFAULT_DECIMALS, formattingThreshold = 100_000): string => {
+  return formatNice(weiToCoin(weiValue, decimals), formattingThreshold)
 }
 
-export const weiFormat = (weiValue: string | bigint, decimals: number = DEFAULT_DECIMALS, formattingThreshold = 100_000): string => {
-  return format(weiToCoins(weiValue, decimals), formattingThreshold)
+export const weiFormatFixed = (weiValue: string | bigint, decimals: number = DEFAULT_DECIMALS, precision: number = 3): string => {
+  return formatFixed(weiToCoin(weiValue, decimals), precision)
 }
 
-export const weiFormatPrecise = (weiValue: string | bigint, precision: number = 3): string => {
-  return formatPrecise(weiToCoins(weiValue), precision)
+export const weiToGwei = (gwei: string | bigint, decimals: number = DEFAULT_DECIMALS): string => {
+  const weiBigInt = BigInt(gwei)
+  if (weiBigInt < 0n) throw new Error('Invalid gwei value')
+  const divisor = 10n ** (BigInt(decimals) / 2n)
+  const [integerPart, fractionalPart = ''] = [
+    (weiBigInt / divisor).toString(),
+    (weiBigInt % divisor).toString().padStart(decimals / 2, '0').replace(/0+$/, '')
+  ]
+  if (!fractionalPart) return integerPart
+  return `${integerPart}.${fractionalPart}`
+}
+
+export const gweiToWei = (gwei: string | number | bigint, decimals: number = DEFAULT_DECIMALS): string => {
+  const multiplier = 10n ** (BigInt(decimals) / 2n)
+
+  const [integerPart, fractionalPart = ''] = gwei.toString().split('.')
+  if (BigInt(integerPart) < 0n) throw new Error('Invalid gwei value - must be positive')
+  const gweiIntegerPartInWei = BigInt(integerPart) * multiplier
+  if (!fractionalPart) return gweiIntegerPartInWei.toString()
+
+  const fractionalPartStr = fractionalPart.padEnd(decimals / 2, '0').slice(0, decimals / 2)
+
+  const weiValue = gweiIntegerPartInWei + BigInt(fractionalPartStr)
+  return weiValue.toString()
+}
+
+export const coinToGwei = (value: string | number, decimals: number = DEFAULT_DECIMALS): string => {
+  return weiToGwei(coinToWei(value, decimals), decimals)
+}
+
+export const gweiToCoin = (value: string | number, decimals: number = DEFAULT_DECIMALS): string => {
+  return weiToCoin(gweiToWei(value, decimals), decimals)
+}
+
+export const cleanUpCoinsValue = (value: string | number): string => {
+  return value.toString().trim().replace(/\.?0+$/, '')
 }
 
 export const Coin = (
@@ -149,54 +185,64 @@ export const Coin = (
   const paddedCurrency = currency.trim() === '' ? '' : ` ${currency.trim()}`
 
   return {
-    coinsToWeiInBigInt: (value: string): bigint => coinsToWeiInBigInt(value, decimals),
-    coinsToWei: (value: string): string => coinsToWei(value, decimals),
-    weiToCoins: (value: string | bigint): string => weiToCoins(value, decimals),
+    coinToWeiInBigInt: (value: string): bigint => coinToWeiInBigInt(value, decimals),
+    coinToWei: (value: string): string => coinToWei(value, decimals),
+    weiToCoin: (value: string | bigint): string => weiToCoin(value, decimals),
 
-    dangerouslyWeiToCoinsInFloat: (value: string | bigint): number => dangerouslyWeiToCoinsInFloat(value, decimals),
+    dangerouslyWeiToCoinInFloat: (value: string | bigint): number => dangerouslyWeiToCoinInFloat(value, decimals),
 
-    format: (value: string): string => format(value, formattingThreshold) + paddedCurrency,
-    formatPrecise: (value: string | number, _precision = precision): string => formatPrecise(value, _precision) + paddedCurrency,
-    formatPure: (value: string | number): string => format(value, formattingThreshold),
-    formatPurePrecise: (value: string | number, _precision = precision): string => formatPrecise(value, _precision),
-    weiFormat: (value: string | bigint): string => weiFormat(value, decimals, formattingThreshold) + paddedCurrency,
-    weiFormatPrecise: (value: string | bigint, _precision = precision): string => weiFormatPrecise(value, _precision) + paddedCurrency,
-    weiFormatPure: (value: string | bigint): string => weiFormat(value, formattingThreshold),
-    weiFormatPurePrecise: (value: string | bigint, _precision = precision): string => weiFormatPrecise(value, _precision),
+    formatNice: (value: string): string => formatNice(value, formattingThreshold) + paddedCurrency,
+    formatMetric: (value: string): string => formatNice(value, formattingThreshold),
+    formatFixed: (value: string | number, _precision = precision): string => formatFixed(value, _precision) + paddedCurrency,
+    formatFixedClean: (value: string | number, _precision = precision): string => formatFixed(value, _precision),
+    weiFormatNice: (value: string | bigint): string => weiFormatNice(value, decimals, formattingThreshold) + paddedCurrency,
+    weiFormatMetric: (value: string | bigint): string => weiFormatNice(value, decimals, formattingThreshold),
+    weiFormatFixed: (value: string | bigint, _precision = precision): string => weiFormatFixed(value, decimals, _precision) + paddedCurrency,
+    weiFormatFixedClean: (value: string | bigint, _precision = precision): string => weiFormatFixed(value, decimals, _precision),
+
+    gwei: {
+      gweiToWei: (value: string | number | bigint): string => gweiToWei(value, decimals),
+      weiToGwei: (value: string | bigint): string => weiToGwei(value, decimals),
+      gweiToCoin: (value: string | number): string => gweiToCoin(value, decimals),
+      coinToGwei: (value: string | number): string => coinToGwei(value, decimals),
+    },
 
     inAllFormats: (value: string | number, _precision = precision): ICoinFormats => {
-      const wei = coinsToWei(value, decimals)
-      const coins = value.toString()
+      const wei = coinToWei(value, decimals)
+      const coins = cleanUpCoinsValue(value)
+      const metric = formatNice(value, formattingThreshold)
       return {
-        parsed: coins,
-        full: format(value, formattingThreshold) + paddedCurrency,
-        precise: formatPrecise(value, _precision) + paddedCurrency,
+        value: coins,
+        metric,
+        nice: metric + paddedCurrency,
+        fixed: formatFixed(value, _precision) + paddedCurrency,
         exact: coins + paddedCurrency,
         currency,
         wei,
       }
     },
 
-    weiInAllFormats:
-      (wei: string | bigint, _precision = precision): ICoinFormats => {
-        const coins = weiToCoins(wei, decimals)
-
-        return {
-          parsed: coins,
-          full: format(coins, formattingThreshold) + paddedCurrency,
-          precise: formatPrecise(coins, _precision) + paddedCurrency,
-          exact: coins + paddedCurrency,
-          currency,
-          wei: wei.toString(),
-        }
+    weiInAllFormats: (wei: string | bigint, _precision = precision): ICoinFormats => {
+      const coins = weiToCoin(wei, decimals)
+      const metric = weiFormatNice(wei, decimals, formattingThreshold)
+      return {
+        value: coins,
+        metric,
+        nice: metric + paddedCurrency,
+        fixed: weiFormatFixed(wei, decimals, _precision) + paddedCurrency,
+        exact: coins + paddedCurrency,
+        currency,
+        wei: wei.toString(),
       }
+    }
   }
 }
 
 export type ICoinFormats = {
-  parsed: string
-  full: string
-  precise: string
+  value: string
+  metric: string
+  nice: string
+  fixed: string
   exact: string
   currency: string
   wei: string
