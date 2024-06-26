@@ -1,3 +1,6 @@
+/**
+ * Default number of decimals to consider for the conversion - 18
+ */
 export const DEFAULT_DECIMALS = 18
 
 const validateDecimals = (decimals: any): decimals is number => {
@@ -6,6 +9,13 @@ const validateDecimals = (decimals: any): decimals is number => {
   return true
 }
 
+/**
+ * Converts a coin value to its equivalent in Wei
+ *
+ * @param {string|number} value - The coin value to convert
+ * @param {number} [decimals=18] - The number of decimal places to consider for the conversion.
+ * @returns The Wei equivalent of the coin value
+ */
 export const coinToWeiInBigInt = (value: string | number, decimals: number = DEFAULT_DECIMALS): bigint => {
   value = value.toString()
 
@@ -30,10 +40,23 @@ export const coinToWeiInBigInt = (value: string | number, decimals: number = DEF
   return weiValue
 }
 
+/**
+ * Converts a coin value to its equivalent in Wei
+ *
+ * @param {string|number} value - The coin value to convert
+ * @param {number} [decimals=18] - The number of decimal places to consider for the conversion.
+ */
 export const coinToWei = (value: string | number, decimals: number = DEFAULT_DECIMALS): string => {
   return coinToWeiInBigInt(value, decimals).toString()
 }
 
+/**
+ * Converts a Wei value to its equivalent in coins
+ *
+ * @param {string|bigint} weiValue - The Wei value to convert
+ * @param {number} [decimals=18] - The number of decimal places to consider for the conversion.
+ * @returns {string} The equivalent coin value
+ */
 export const weiToCoin = (weiValue: string | bigint, decimals: number = DEFAULT_DECIMALS): string => {
   validateDecimals(decimals)
 
@@ -68,9 +91,24 @@ export const weiToCoin = (weiValue: string | bigint, decimals: number = DEFAULT_
   return formattedEthAmount
 }
 
+/**
+ * Dangerously converts a Wei value to its equivalent in coins as a float.
+ *
+ * @deprecated This function may result in precision loss. Use with caution.
+ * @param {string|bigint} weiValue - The Wei value to convert.
+ * @param {number} [decimals=18] - The number of decimal places to consider for the conversion.
+ * @returns {number} The equivalent coin value as a float.
+ */
 export const dangerouslyWeiToCoinInFloat = (weiValue: string | bigint, decimals: number = DEFAULT_DECIMALS): number =>
   parseFloat(weiToCoin(weiValue, decimals))
 
+
+/**
+ * Formats value of coins to a nice format (like 1532900 to 1.532M)
+ *
+ * @param {string|number} value - The value to format
+ * @param {number} [formattingThreshold=100000] - The threshold value to consider for formatting
+ */
 export const formatNice = (value: string | number, formattingThreshold: number = 100_000): string => {
   const numStr = typeof value === 'string' ? value : value.toString()
   const roughNum = parseFloat(numStr)
@@ -118,6 +156,12 @@ export const formatNice = (value: string | number, formattingThreshold: number =
   return `${formatted}${suffixes[i]}`
 }
 
+/**
+ * Formats a value to a metric format with specific precision (like '1199.9' to '1199.900')
+ *
+ * @param {string|number} value - The value to format
+ * @param {number} [precision=3] - The number of decimal places to use for formatting.
+ */
 export const formatFixed = (value: string | number, precision: number = 3): string => {
   const numStr = value.toString()
   if (precision === -1) return numStr
@@ -128,16 +172,37 @@ export const formatFixed = (value: string | number, precision: number = 3): stri
   return `${integerPart}.${fractionalPart.substring(0, precision).padEnd(precision, '0')}`
 }
 
+/**
+ * Formats a Wei value to a nice format (like 1532900000000000000000000 to 1.532M)
+ *
+ * @param {string|bigint} weiValue - The value to format
+ * @param {number} [decimals=18] - The number of decimal places to consider for the conversion.
+ * @param {number} [formattingThreshold] - The threshold value to consider for formatting, default is 100_000
+ */
 export const weiFormatNice = (weiValue: string | bigint, decimals: number = DEFAULT_DECIMALS, formattingThreshold = 100_000): string => {
   return formatNice(weiToCoin(weiValue, decimals), formattingThreshold)
 }
 
+/**
+ * Formats a Wei value to a metric format with specific precision (like '1199500000000000000000' to '1199.500')
+ *
+ * @param {string|bigint} weiValue - The value to format
+ * @param {number} [decimals=18] - The number of decimal places to consider for the conversion.
+ * @param {number} [precision=3] - The number of decimal places to use for formatting.
+ */
 export const weiFormatFixed = (weiValue: string | bigint, decimals: number = DEFAULT_DECIMALS, precision: number = 3): string => {
   return formatFixed(weiToCoin(weiValue, decimals), precision)
 }
 
-export const weiToGwei = (gwei: string | bigint, decimals: number = DEFAULT_DECIMALS): string => {
-  const weiBigInt = BigInt(gwei)
+/**
+ * Converts a Wei value to its equivalent in Gwei.
+ *
+ * @param {string|bigint} wei - The Wei value to convert.
+ * @param {number} [decimals=18] - The number of decimal places to consider for the conversion.
+ * @returns {string} The equivalent Gwei value as a string.
+ */
+export const weiToGwei = (wei: string | bigint, decimals: number = DEFAULT_DECIMALS): string => {
+  const weiBigInt = BigInt(wei)
   if (weiBigInt < 0n) throw new Error('Invalid gwei value')
   const divisor = 10n ** (BigInt(decimals) / 2n)
   const [integerPart, fractionalPart = ''] = [
@@ -148,6 +213,13 @@ export const weiToGwei = (gwei: string | bigint, decimals: number = DEFAULT_DECI
   return `${integerPart}.${fractionalPart}`
 }
 
+/**
+ * Converts a Gwei value to its equivalent in Wei.
+ *
+ * @param {string|number|bigint} gwei - The Gwei value to convert.
+ * @param {number} [decimals=18] - The number of decimal places to consider for the conversion.
+ * @returns {string} The equivalent Wei value as a string.
+ */
 export const gweiToWei = (gwei: string | number | bigint, decimals: number = DEFAULT_DECIMALS): string => {
   const multiplier = 10n ** (BigInt(decimals) / 2n)
 
@@ -162,14 +234,34 @@ export const gweiToWei = (gwei: string | number | bigint, decimals: number = DEF
   return weiValue.toString()
 }
 
+/**
+ * Converts a coin value to its equivalent in Gwei.
+ *
+ * @param {string|number} value - The coin value to convert.
+ * @param {number} [decimals=18] - The number of decimal places to consider for the conversion.
+ * @returns {string} The equivalent Gwei value as a string.
+ */
 export const coinToGwei = (value: string | number, decimals: number = DEFAULT_DECIMALS): string => {
   return weiToGwei(coinToWei(value, decimals), decimals)
 }
 
+/**
+ * Converts a Gwei value to its equivalent in coins.
+ *
+ * @param {string|number} value - The Gwei value to convert.
+ * @param {number} [decimals=18] - The number of decimal places to consider for the conversion.
+ * @returns {string} The equivalent coin value as a string.
+ */
 export const gweiToCoin = (value: string | number, decimals: number = DEFAULT_DECIMALS): string => {
   return weiToCoin(gweiToWei(value, decimals), decimals)
 }
 
+/**
+ * Cleans up a coin value by removing trailing zeros and the decimal point if not needed.
+ *
+ * @param {string|number} value - The coin value to clean up.
+ * @returns {string} The cleaned-up coin value as a string.
+ */
 export const cleanUpCoinsValue = (value: string | number): string => {
   return value.toString().trim().replace(/\.?0+$/, '')
 }
@@ -212,6 +304,17 @@ export type ICoin = {
   weiInAllFormats: (wei: string | bigint, precision?: number) => ICoinFormats
 }
 
+/**
+ * A factory function that creates an ICoin object with specified properties and methods,
+ * encapsulating all the capabilities of the library in one place.
+ *
+ * @param {string} currency - The currency symbol.
+ * @param {number} [decimals=18] - The number of decimal places to consider for the currency.
+ * @param {number} [precision=3] - The number of decimal places to use for formatting.
+ * @param {number} [formattingThreshold=100000] - The threshold above which formatting is applied.
+ * @returns {ICoin} A new ICoin object with all the features you need.
+ * @throws {Error} If the currency is not a string or if the decimals are invalid.
+ */
 export const Coin = (
   currency: string,
   decimals: number = DEFAULT_DECIMALS,

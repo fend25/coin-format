@@ -107,6 +107,7 @@ describe('Utils - coins', () => {
     const empty = Coin('')
     expect(empty.formatFixed('1199.9')).to.equal('1199.900')
     expect(empty.weiFormatNice('1199500000000000000000')).to.equal('1199.50')
+    expect(empty.weiFormatFixed('1199500000000000000000')).to.equal('1199.500')
 
     // without currency, specific decimals
     const empty12 = Coin('', 12)
