@@ -1,6 +1,6 @@
 {
   "name": "@fend/coin-format",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "exports": "./mod.ts",
   "publish": {
     "include": [
