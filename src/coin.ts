@@ -174,12 +174,50 @@ export const cleanUpCoinsValue = (value: string | number): string => {
   return value.toString().trim().replace(/\.?0+$/, '')
 }
 
+
+export type ICoinFormats = {
+  value: string
+  metric: string
+  nice: string
+  fixed: string
+  exact: string
+  currency: string
+  wei: string
+}
+
+export type ICoin = {
+  coinToWeiInBigInt: (value: string) => bigint
+  coinToWei: (value: string) => string
+  weiToCoin: (value: string | bigint) => string
+
+  dangerouslyWeiToCoinInFloat: (value: string | bigint) => number
+
+  formatNice: (value: string) => string
+  formatMetric: (value: string) => string
+  formatFixed: (value: string | number, precision?: number) => string
+  formatFixedClean: (value: string | number, precision?: number) => string
+  weiFormatNice: (value: string | bigint) => string
+  weiFormatMetric: (value: string | bigint) => string
+  weiFormatFixed: (value: string | bigint, precision?: number) => string
+  weiFormatFixedClean: (value: string | bigint, precision?: number) => string
+
+  gwei: {
+    gweiToWei: (value: string | number | bigint) => string
+    weiToGwei: (value: string | bigint) => string
+    gweiToCoin: (value: string | number) => string
+    coinToGwei: (value: string | number) => string
+  }
+
+  inAllFormats: (value: string | number, precision?: number) => ICoinFormats
+  weiInAllFormats: (wei: string | bigint, precision?: number) => ICoinFormats
+}
+
 export const Coin = (
   currency: string,
   decimals: number = DEFAULT_DECIMALS,
   precision: number = 3,
   formattingThreshold: number = 100_000
-) => {
+): ICoin => {
   if (typeof currency as any !== 'string') throw new Error('Invalid currency, must be a string')
   validateDecimals(decimals)
   const paddedCurrency = currency.trim() === '' ? '' : ` ${currency.trim()}`
@@ -237,15 +275,3 @@ export const Coin = (
     }
   }
 }
-
-export type ICoinFormats = {
-  value: string
-  metric: string
-  nice: string
-  fixed: string
-  exact: string
-  currency: string
-  wei: string
-}
-
-export type ICoin = ReturnType<typeof Coin>
