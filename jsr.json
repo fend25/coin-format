@@ -1,0 +1,5 @@
+{
+  "name": "@fend/coin-format",
+  "version": "0.0.2",
+  "exports": "./mod.ts"
+}
