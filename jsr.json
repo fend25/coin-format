@@ -1,5 +1,16 @@
 {
   "name": "@fend/coin-format",
   "version": "0.0.2",
-  "exports": "./mod.ts"
+  "exports": "./mod.ts",
+  "publish": {
+    "include": [
+      "jsr.json",
+      "README.md",
+      "logo.svg",
+      "package.json",
+      "tsconfig.json",
+      "mod.ts",
+      "src/**/*.ts"
+    ]
+  }
 }
